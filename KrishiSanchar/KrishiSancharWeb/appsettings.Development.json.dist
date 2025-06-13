@@ -1,0 +1,18 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "Console": {
+    "IncludeScopes": true
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost; Database=krishisanchar; Username=root; Password='';"
+  },
+  "Cloudinary": {
+    "Url": "cloudinary://126617111995246:4E3jDcaozgic5-I2XpTKLmZ6r_c@dzmn8dd3l"
+  }
+}

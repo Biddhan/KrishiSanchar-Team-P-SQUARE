@@ -1,0 +1,13 @@
+.vs/
+.idea/
+KrishiSancharCore/obj
+KrishiSancharCore/bin
+KrishiSancharDataAccess/obj
+KrishiSancharDataAccess/bin
+KrishiSancharWeb/obj
+KrishiSancharWeb/bin
+KrishiSancharWeb/appsettings.Production.json
+KrishiSancharWeb/appsettings.Development.json
+.idea
+.vs
+KrishiSancharDataAccess/Migrations
