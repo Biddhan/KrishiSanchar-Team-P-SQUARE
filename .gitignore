@@ -1,6 +1,7 @@
 .idea/
 KrishiSanchar/.idea/
 KrishiSanchar/.vs/
+KrishiSanchar/script.sql
 KrishiSanchar/KrishiSancharWeb/obj
 KrishiSanchar/KrishiSancharWeb/bin
 KrishiSanchar/KrishiSancharWeb/appsettings.Production.json
