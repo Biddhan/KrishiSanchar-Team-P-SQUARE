@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using KrishiSancharCore;
 using KrishiSancharCore.AuthFeatures;
+using KrishiSancharCore.Helper;
 using KrishiSancharCore.UserFeatures;
 using KrishiSancharWeb.ViewModel.UserViewModel;
 using Microsoft.AspNetCore.Mvc;
@@ -13,10 +14,12 @@ public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
     private readonly IUow _uow;
-    public AuthController(AuthService authService,IUow uow)
+    private readonly CurrentUserHelper _currentUserHelper;
+    public AuthController(AuthService authService,IUow uow,CurrentUserHelper currentUserHelper)
     {
         _authService = authService;
         _uow = uow;
+        _currentUserHelper = currentUserHelper;
     }
 
     [HttpGet("verify")]
@@ -60,32 +63,29 @@ public class AuthController : ControllerBase
         {
             return Unauthorized("Invalid credentials");
         }
-        _authService.SetJwtCookie(user);
+       var token= _authService.SetJwtCookie(user);
+        return Ok(new { token});
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> LogoutUserAsync()
+    {
+        Response.Cookies.Delete("c_user");
         return Ok();
     }
     
     [HttpGet("me")]
     public IActionResult GetLoggedInUser()
     {
-        var token = Request.Cookies["c_user"];
-        if (string.IsNullOrEmpty(token))
+        var (userId, email, role) = _currentUserHelper.GetUserInfo();
+        if (userId == null)
             return Unauthorized("User not logged in.");
 
-        var principal = _authService.DecodeJwtToken(token);
-        if (principal == null)
-            return Unauthorized("Invalid token.");
-
-        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var email = principal.FindFirst(ClaimTypes.Email)?.Value;
-        var role = principal.FindFirst(ClaimTypes.Role)?.Value;
-
-        return Ok(new
-        {
-            UserId = userId,
-            Email = email,
-            Role = role
-        });
+        return Ok(new { UserId = userId, Email = email, Role = role });
     }
+
+
+
     
     
 }

@@ -48,7 +48,7 @@ public class AuthService
         return _jwtService.ValidateToken(token);
     }
 
-    public void SetJwtCookie(UserEntity user)
+    public string SetJwtCookie(UserEntity user)
     {
         var token = GenerateJwtToken(user);
         _httpContextAccessor.HttpContext.Response.Cookies.Append("c_user", token, new CookieOptions
@@ -58,6 +58,7 @@ public class AuthService
             SameSite = SameSiteMode.Lax,
             Expires = DateTime.UtcNow.AddDays(_jwtService.ExpiresInDays)
         });
+        return token;
     }
 
     public async Task RegisterUserAsync(UserCreateDto dto)
