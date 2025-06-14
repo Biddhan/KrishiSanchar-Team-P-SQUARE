@@ -4,9 +4,11 @@ using KrishiSancharCore;
 using KrishiSancharCore.AuthFeatures;
 using KrishiSancharCore.Helper;
 using KrishiSancharCore.ProductFeatures;
+using KrishiSancharCore.ReservationFeatures;
 using KrishiSancharDataAccess.Converter.Utility;
 using KrishiSancharDataAccess.Data;
 using KrishiSancharDataAccess.Repository;
+using KrishiSancharInfrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -34,6 +36,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IUow, Uow>();
 builder.Services.AddScoped<IProductRepo, ProductRepo>();
 builder.Services.AddScoped<CloudinaryService>();
+builder.Services.AddScoped<IReservationCleanupService, ReserveItemCleanupService>();
+builder.Services.AddHostedService<ReserveItemCleanupService>();
 
 builder.Services.AddAuthentication(options =>
 {

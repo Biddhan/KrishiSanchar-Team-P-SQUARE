@@ -1,5 +1,6 @@
 ﻿using KrishiSancharCore.CategoryFeatures;
 using KrishiSancharCore.ProductFeatures;
+using KrishiSancharCore.ReservationFeatures;
 using KrishiSancharCore.UserFeatures;
 using KrishiSancharCore.UserFeatures.UserEnums;
 using KrishiSancharDataAccess.Configuration;
@@ -17,6 +18,7 @@ public class AppDbContext: DbContext
         public DbSet<CategoryEntity> Categories { get; set; }
         public DbSet<ProductEntity> Products { get; set; }
         public DbSet<UserEntity> Users { get; set; }
+        public DbSet<ReservationItemEntity> ReservationItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,6 +26,7 @@ public class AppDbContext: DbContext
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
             modelBuilder.ApplyConfiguration(new UserConfiguration());
+            modelBuilder.ApplyConfiguration(new ReservationItemEntityConfiguration());
             new AppSeeder(modelBuilder);
             modelBuilder.Entity<UserEntity>().HasData(
                 new UserEntity(

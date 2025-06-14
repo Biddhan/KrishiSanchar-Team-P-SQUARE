@@ -36,7 +36,7 @@ public class ProductEntity
         public string Description { get; set; }
         public string ImageUrl { get; set; }
         public int Stock { get; set; }
-        public int? Reserve { get; set; }
+        public int Reserve { get; set; } = 0;
         public decimal UnitPrice { get; set; }
         public decimal DisplayPrice { get; set; }
         public int CategoryId { get; set; }
@@ -69,7 +69,7 @@ public class ProductEntity
 
         public void CalculateDisplayPrice()
         {
-            DisplayPrice = UnitPrice * 1.005m;
+            DisplayPrice = UnitPrice * 1.05m;
         }
 
 

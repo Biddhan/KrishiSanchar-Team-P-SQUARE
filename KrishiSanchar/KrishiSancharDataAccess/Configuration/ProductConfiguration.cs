@@ -50,8 +50,8 @@ namespace KrishiSancharDataAccess.Configuration
                 .IsRequired();
 
             builder.Property(p => p.Reserve)
-                .HasColumnName("reserve")
-                .IsRequired(false);
+                .HasColumnName("reserve");
+               
 
             builder.Property(p => p.UnitPrice)
                 .HasColumnName("unit_price")
