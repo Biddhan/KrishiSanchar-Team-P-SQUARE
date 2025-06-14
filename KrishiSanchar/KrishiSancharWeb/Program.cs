@@ -14,14 +14,10 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseMySQL(builder.
 
 builder.Services.AddHttpContextAccessor();
 
-
-builder.Services.Configure<JwtService>(
-    builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<JwtService>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<BrevoSettings>(builder.Configuration.GetSection("BrevoSettings"));
 builder.Services.Configure<NgrokService>(builder.Configuration.GetSection("NgrokSettings"));
 builder.Services.Configure<UrlService>(builder.Configuration.GetSection("UrlSettings"));
-
-
 
 var cloudinaryUrl = builder.Configuration["Cloudinary:Url"];
 builder.Services.AddSingleton(new Cloudinary(cloudinaryUrl));
@@ -33,13 +29,23 @@ builder.Services.AddScoped<IUow, Uow>();
 builder.Services.AddScoped<IProductRepo, ProductRepo>();
 builder.Services.AddScoped<CloudinaryService>();
 
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.SetIsOriginAllowed(_ => true) // Allow all origins
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+app.UseCors("AllowFrontend");
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -48,10 +54,6 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = string.Empty;
 });
 
-
-
-app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
-

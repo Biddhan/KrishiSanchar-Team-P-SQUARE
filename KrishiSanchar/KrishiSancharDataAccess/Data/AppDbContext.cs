@@ -34,7 +34,16 @@ public class AppDbContext: DbContext
                     email: "romanforgit@gmail.com",
                     phoneNumber: "+9779817996680",
                     address: "Biratmode-4"
-                ) { Status = UserStatusEnum.Active, IsVerified = true, Role= UserRoleEnum.Admin }
+                ) { Status = UserStatusEnum.Active, IsVerified = true, Role= UserRoleEnum.Admin },
+                new UserEntity(
+                    id: 4,
+                    fullname: "Krishi User",
+                    username: "krishi.3",
+                    passwordHash: BCrypt.Net.BCrypt.HashPassword("Secret123"),
+                    email: "webcone1@gmail.com",
+                    phoneNumber: "+9779817996909",
+                    address: "Biratmode-4"
+                ) { Status = UserStatusEnum.Active, IsVerified = true, Role= UserRoleEnum.General }
             );
             
         }

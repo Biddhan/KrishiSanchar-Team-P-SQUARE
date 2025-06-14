@@ -22,7 +22,7 @@ public class ProductService
     public async Task CreateProduct(ProductCreateDto dto)
     {
         var entity = new ProductEntity(dto.Name, dto.Description, dto.ImageUrl, dto.CategoryId, dto.Stock,
-            dto.UnitPrice);
+            dto.UnitPrice,dto.SellerId);
         await _productRepo.Create(entity);
     }
     

@@ -52,7 +52,8 @@ public class ProductApiController: ControllerBase
             Description = vm.Description,
             CategoryId = vm.CategoryId,
             Stock = vm.Stock,
-            UnitPrice = vm.UnitPrice
+            UnitPrice = vm.UnitPrice,
+            SellerId = vm.SellerId
         };      
 
         try

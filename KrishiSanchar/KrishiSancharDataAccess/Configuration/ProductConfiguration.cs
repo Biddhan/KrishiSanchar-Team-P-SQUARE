@@ -1,4 +1,5 @@
 ﻿using KrishiSancharCore.ProductFeatures;
+using KrishiSancharCore.UserFeatures;
 using KrishiSancharDataAccess.Converter;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -20,6 +21,16 @@ namespace KrishiSancharDataAccess.Configuration
             builder.Property(p => p.Guid)
                 .HasColumnName("guid")
                 .IsRequired();
+            
+            builder.Property(p => p.SellerId)
+                .HasColumnName("seller_Id")
+                .IsRequired();
+            
+            builder.HasOne(p => p.Seller)
+                .WithMany()
+                .HasForeignKey(p => p.SellerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
 
             builder.Property(p => p.Name)
                 .HasColumnName("name")

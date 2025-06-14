@@ -23,6 +23,8 @@ public class ProductCreateViewModel
     [Required(ErrorMessage = "Price is required")]
     [Range(0, int.MaxValue, ErrorMessage = "Price cannot be negative")]
     public int UnitPrice { get; set; }
+    
+    public int SellerId { get; set; }
      
     public IFormFile Image { get; set; }
 }

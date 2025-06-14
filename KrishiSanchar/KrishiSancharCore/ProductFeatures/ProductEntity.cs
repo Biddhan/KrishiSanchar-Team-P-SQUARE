@@ -1,4 +1,5 @@
 ﻿using KrishiSancharCore.CategoryFeatures;
+using KrishiSancharCore.UserFeatures;
 
 namespace KrishiSancharCore.ProductFeatures;
 
@@ -7,25 +8,28 @@ public class ProductEntity
         protected ProductEntity()
         {
         }
-        public ProductEntity(string Name, string Description, string ImageUrl, int CategoryId, int Stock,decimal UnitPrice)
+        public ProductEntity(string name, string description, string imageUrl, int categoryId, int stock, decimal unitPrice, int sellerId)
         {
             Guid = Guid.NewGuid();
-            this.Name = Name;
-            this.Description = Description;
-            this.ImageUrl = ImageUrl;
-            this.CategoryId = CategoryId;
+            Name = name;
+            Description = description;
+            ImageUrl = imageUrl;
+            CategoryId = categoryId;
             CreatedDate = DateOnly.FromDateTime(DateTime.Now);
             CreatedTime = TimeOnly.FromDateTime(DateTime.Now);
-            this.Stock = Stock;
-            this.UnitPrice = UnitPrice;
+            Stock = stock;
+            UnitPrice = unitPrice;
+            SellerId = sellerId;
             CalculateDisplayPrice();
             Activate();
+        }
 
-        }
-        public ProductEntity(int Id,string Name, string Description, string ImageUrl, int CategoryId, int stock,decimal UnitPrice): this(Name,Description,ImageUrl,CategoryId,stock,UnitPrice)
+        public ProductEntity(int id, string name, string description, string imageUrl, int categoryId, int stock, decimal unitPrice, int sellerId)
+            : this(name, description, imageUrl, categoryId, stock, unitPrice, sellerId)
         {
-            this.Id =Id;
+            Id = id;
         }
+
         public int Id { get; protected set; }
         public Guid Guid { get; set; }
         public string Name { get; set; }
@@ -36,6 +40,9 @@ public class ProductEntity
         public decimal UnitPrice { get; set; }
         public decimal DisplayPrice { get; set; }
         public int CategoryId { get; set; }
+        
+        public int SellerId { get; set; }
+        public UserEntity Seller { get; set; }
         public DateOnly CreatedDate { get; private set; }
         public DateOnly UpdatedDate { get; private set; }
         public TimeOnly UpdatedTime { get; private set; }

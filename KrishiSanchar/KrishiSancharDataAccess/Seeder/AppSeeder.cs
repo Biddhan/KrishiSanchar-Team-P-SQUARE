@@ -6,14 +6,13 @@ public class AppSeeder
 {
     public AppSeeder(ModelBuilder modelBuilder)
          {
+             //Users
+             new UserSeeder(modelBuilder);
              // Categories
              new CategorySeeder(modelBuilder);
 
              // Products
              new ProductSeeder(modelBuilder);
-
-             //Users
-             // new UserSeeder(modelBuilder);
 
              //Orders
              // new OrderSeeder(modelBuilder);

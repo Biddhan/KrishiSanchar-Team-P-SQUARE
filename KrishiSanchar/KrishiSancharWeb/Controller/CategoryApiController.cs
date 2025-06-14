@@ -21,7 +21,11 @@ namespace KrishiSancharWeb.Controllers
         {
             try
             {
-                var categories = await _dbcontext.Categories.Include(e => e.Products).ToListAsync();
+                var categories = await _dbcontext.Categories
+                    .Include(c => c.Products)
+                    .ThenInclude(p => p.Seller)
+                    .ToListAsync();
+
                 return Ok(categories);
             }
             catch (Exception e)

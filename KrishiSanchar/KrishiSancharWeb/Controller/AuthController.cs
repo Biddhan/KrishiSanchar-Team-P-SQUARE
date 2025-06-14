@@ -1,4 +1,5 @@
-﻿using KrishiSancharCore;
+﻿using System.Security.Claims;
+using KrishiSancharCore;
 using KrishiSancharCore.AuthFeatures;
 using KrishiSancharCore.UserFeatures;
 using KrishiSancharWeb.ViewModel.UserViewModel;
@@ -52,7 +53,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> LoginUserAsync(UserLoginRequestApiViewModel vm)
+    public async Task<IActionResult> LoginUserAsync([FromBody] UserLoginRequestApiViewModel vm)
     {
         var user = await _uow.Users.GetUserByEmail(vm.Email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(vm.Password, user.PasswordHash))
@@ -62,4 +63,29 @@ public class AuthController : ControllerBase
         _authService.SetJwtCookie(user);
         return Ok();
     }
+    
+    [HttpGet("me")]
+    public IActionResult GetLoggedInUser()
+    {
+        var token = Request.Cookies["c_user"];
+        if (string.IsNullOrEmpty(token))
+            return Unauthorized("User not logged in.");
+
+        var principal = _authService.DecodeJwtToken(token);
+        if (principal == null)
+            return Unauthorized("Invalid token.");
+
+        var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var email = principal.FindFirst(ClaimTypes.Email)?.Value;
+        var role = principal.FindFirst(ClaimTypes.Role)?.Value;
+
+        return Ok(new
+        {
+            UserId = userId,
+            Email = email,
+            Role = role
+        });
+    }
+    
+    
 }

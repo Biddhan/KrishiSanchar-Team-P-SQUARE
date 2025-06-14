@@ -54,8 +54,8 @@ public class AuthService
         _httpContextAccessor.HttpContext.Response.Cookies.Append("c_user", token, new CookieOptions
         {
             HttpOnly = true,
-            Secure = true,
-            SameSite = SameSiteMode.Strict,
+            Secure = false,
+            SameSite = SameSiteMode.Lax,
             Expires = DateTime.UtcNow.AddDays(_jwtService.ExpiresInDays)
         });
     }
