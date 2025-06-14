@@ -1,33 +1,38 @@
-﻿using KrishiSancharCore.OrderFeature.OrderEnums;
+﻿using KrishiSancharCore.LedgerFeatures;
+using KrishiSancharCore.OrderFeature.OrderEnums;
+using KrishiSancharCore.PaymentFeatures;
+using KrishiSancharCore.UserFeatures;
 
 namespace KrishiSancharCore.OrderFeature;
 
 public class OrderEntity
 {
-    public OrderEntity(string Description,int CustomerId, string DelieveryAddress)
+    public OrderEntity()
     {
         Guid = Guid.NewGuid();
-        this.Description = Description;
         OrderStatus = OrderStatusEnum.Pending;
-        this.DelieveryAddress = DelieveryAddress;
         CreatedDate = DateOnly.FromDateTime(DateTime.Now);
         CreatedTime = TimeOnly.FromDateTime(DateTime.Now);
     }
 
-    public OrderEntity(int Id, string Description, int CustomerId, string OrderStatus, string DelieveryAddress):this(Description, CustomerId, DelieveryAddress)
+    public OrderEntity(int Id, string Description, string OrderStatus, string DeliveryAddress):base()
     {
         this.Id = Id;
     }
 
     public int Id { get; protected set; }
     public Guid Guid { get; set; }
-    public string Description { get; set; }
-    // public ICollection<OrderItemEntity> OrderItems { get; set; } = new List<OrderItemEntity>();
+    public int BuyerId { get; set; }
+    public UserEntity Buyer { get; set; }
     public DateOnly CreatedDate { get; set; }
     public TimeOnly CreatedTime { get; set; }
-    public string OrderStatus { get; set; }
-    public string DelieveryAddress  { get; set; }
-    // public decimal FinalPrice => OrderItems.Sum(item => item.TotalPrice);
+    public OrderStatusEnum OrderStatus { get; set; }
+    public string DeliveryAddress  { get; set; }
+    public decimal TotalGrossAmount { get; set; }
+    
+    public List<OrderItemEntity> OrderItems { get; set; }
+    public List<LedgerEntity> Ledgers { get; set; }
+    public List<PaymentEntity> Payments { get; set; }
 
     public void OrderPending()
     {

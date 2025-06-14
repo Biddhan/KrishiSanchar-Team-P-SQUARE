@@ -9,6 +9,5 @@ public class ItemReserveRequest
     public int Quantity { get; set; }
     public int ProductId { get; set; }
     [ValidateNever]
-    
-    public virtual ProductEntity Product { get; set; }
+    public ProductEntity Product { get; set; }
 }

@@ -1,4 +1,7 @@
 ﻿using KrishiSancharCore.CategoryFeatures;
+using KrishiSancharCore.LedgerFeatures;
+using KrishiSancharCore.OrderFeature;
+using KrishiSancharCore.PaymentFeatures;
 using KrishiSancharCore.ProductFeatures;
 using KrishiSancharCore.ReservationFeatures;
 using KrishiSancharCore.UserFeatures;
@@ -18,6 +21,9 @@ public class AppDbContext: DbContext
         public DbSet<CategoryEntity> Categories { get; set; }
         public DbSet<ProductEntity> Products { get; set; }
         public DbSet<UserEntity> Users { get; set; }
+        public DbSet<OrderEntity> Orders { get; set; }
+        public DbSet<PaymentEntity> Payments { get; set; }
+        public DbSet<LedgerEntity> Ledgers { get; set; }
         public DbSet<ReservationItemEntity> ReservationItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -26,6 +32,7 @@ public class AppDbContext: DbContext
             modelBuilder.ApplyConfiguration(new CategoryConfiguration());
             modelBuilder.ApplyConfiguration(new ProductConfiguration());
             modelBuilder.ApplyConfiguration(new UserConfiguration());
+            modelBuilder.ApplyConfiguration(new OrderConfiguration());
             modelBuilder.ApplyConfiguration(new ReservationItemEntityConfiguration());
             new AppSeeder(modelBuilder);
             modelBuilder.Entity<UserEntity>().HasData(
