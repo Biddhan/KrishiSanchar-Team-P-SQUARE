@@ -39,4 +39,29 @@ public class BrevoEmailService
 
         Console.WriteLine(await response.Content.ReadAsStringAsync());
     }
+    
+    public async Task SendConfirmationEmailAsync(string toEmail, string confirmLink,string fullName)
+    {
+        var payload = new
+        {
+            to = new[] { new { email = toEmail } },
+            templateId = 2, 
+            @params = new
+            {
+                confirm_link = confirmLink ,
+                full_name= fullName
+            }
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
+        request.Headers.Add("api-key", _settings.ApiKey); 
+
+        var json = JsonSerializer.Serialize(payload);
+        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(request); 
+        response.EnsureSuccessStatusCode();
+
+        Console.WriteLine(await response.Content.ReadAsStringAsync());
+    }
 }

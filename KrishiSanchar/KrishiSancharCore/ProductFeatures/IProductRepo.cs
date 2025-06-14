@@ -7,4 +7,5 @@ public interface IProductRepo
     Task Create(ProductEntity entity);
     Task Update(ProductEntity entity);
     Task Delete(ProductEntity entity);
+    Task<List<ProductEntity>> GetAllProductsByDescription(string description);
 }

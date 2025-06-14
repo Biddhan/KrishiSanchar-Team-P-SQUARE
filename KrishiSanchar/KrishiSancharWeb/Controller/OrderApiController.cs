@@ -1,27 +1,35 @@
-﻿    using KrishiSancharCore;
-    using KrishiSancharCore.Helper;
-    using KrishiSancharCore.OrderFeature.OrderCheckoutFeatures;
-    using KrishiSancharCore.ReservationFeatures;
-    using KrishiSancharDataAccess.Data;
-    using Microsoft.AspNetCore.Mvc;
+﻿using KrishiSancharCore;
+using KrishiSancharCore.Helper;
+using KrishiSancharCore.LedgerFeatures;
+using KrishiSancharCore.OrderFeature;
+using KrishiSancharCore.OrderFeature.OrderCheckoutFeatures;
+using KrishiSancharCore.OrderFeature.OrderEnums;
+using KrishiSancharCore.PaymentFeatures;
+using KrishiSancharCore.ReservationFeatures;
+using KrishiSancharDataAccess.Data;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
-    namespace KrishiSancharWeb.Controllers;
-    [ApiController]
-    [Route("api/order")]
-    public class OrderApiController : ControllerBase
+namespace KrishiSancharWeb.Controllers;
+
+[ApiController]
+[Route("api/order")]
+public class OrderApiController : ControllerBase
+{
+    private readonly IUow _uow;
+    private readonly CurrentUserHelper _currentUserHelper;
+    private readonly AppDbContext _dbContext;
+    private readonly IMemoryCache _cache;
+
+    public OrderApiController(IUow uow, CurrentUserHelper currentUserHelper, AppDbContext dbcontext,IMemoryCache cache)
     {
-        private readonly IUow _uow;
-        private readonly CurrentUserHelper _currentUserHelper;
-        private readonly AppDbContext _dbContext;
+        _uow = uow;
+        _currentUserHelper = currentUserHelper;
+        _dbContext = dbcontext;
+        _cache = cache;
+    }
 
-        public OrderApiController(IUow uow,CurrentUserHelper currentUserHelper,AppDbContext dbcontext)
-        {
-            _uow = uow;
-            _currentUserHelper = currentUserHelper;
-            _dbContext = dbcontext;
-        }
-
-       [HttpPost("preview")]
+    [HttpPost("preview")]
     public async Task<IActionResult> PreviewOrder([FromBody] List<ItemReserveRequest> cartItems)
     {
         if (cartItems == null || !cartItems.Any())
@@ -34,7 +42,16 @@
 
         try
         {
-            // Validate products and populate item.Product
+            var userId = _currentUserHelper.GetUserId();
+            if (userId == null)
+                return Unauthorized();
+
+            var user = await _uow.Users.GetUserById(userId.Value);
+            if (user == null)
+                return NotFound("User not found.");
+
+            previewResponse.DeliveryAddress = user.Address;
+
             foreach (var item in cartItems)
             {
                 var product = await _uow.Products.GetProductById(item.ProductId);
@@ -56,7 +73,7 @@
             if (reserveResult is BadRequestObjectResult || reserveResult is UnauthorizedResult)
                 return reserveResult;
 
-            // Group items for preview response
+            // Group items by seller
             var grouped = cartItems.GroupBy(i => i.Product.Seller.Id)
                 .Select((g, index) => new KeyValuePair<string, Package>(
                     $"package{index + 1}",
@@ -68,13 +85,17 @@
                             ProductId = i.ProductId,
                             ProductName = i.Product.Name,
                             Quantity = i.Quantity,
-                            SubTotalAmount = i.Product.DisplayPrice * i.Quantity
+                            SubTotalAmount = i.Product.DisplayPrice * i.Quantity,
+                            SubNetTotalAmount = i.Product.UnitPrice * i.Quantity,
                         }).ToList(),
                         DeliveryCharge = 50
                     }
                 ));
 
             previewResponse.Packages = grouped.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            var token = Guid.NewGuid().ToString();
+            previewResponse.Token = token;
+            _cache.Set(token, previewResponse, TimeSpan.FromMinutes(15));
 
             return Ok(previewResponse);
         }
@@ -83,6 +104,7 @@
             return StatusCode(500, ex.Message);
         }
     }
+
 
     private async Task<IActionResult> ReserveProducts(List<ItemReserveRequest> cartItems)
     {
@@ -134,4 +156,84 @@
         }
     }
 
+    [HttpPost("placeorder")]
+public async Task<IActionResult> PlaceOrder([FromBody] OrderPlaceRequestDto request)
+{
+    if (string.IsNullOrWhiteSpace(request.Token))
+        return BadRequest("Missing preview token.");
+
+    var preview = _cache.Get<OrderPreviewResponse>(request.Token);
+    if (preview == null)
+        return BadRequest("Order session expired.");
+
+    var userId = _currentUserHelper.GetUserId();
+    if (userId == null)
+        return Unauthorized();
+
+    var order = new OrderEntity
+    {
+        BuyerId = userId.Value,
+        DeliveryAddress = request.DeliveryAddress,
+        TotalGrossAmount = preview.GrandTotalAmount,
+        OrderItems = preview.Packages
+            .SelectMany(p => p.Value.Items.Select(i => new OrderItemEntity
+            {
+                ProductId = i.ProductId,
+                Quantity = i.Quantity,
+                TotalPrice = i.SubTotalAmount
+            }))
+            .ToList()
+    };
+
+    await _uow.Orders.CreateOrder(order);
+    await _uow.SaveChangesAsync();
+    _cache.Remove(request.Token);
+
+    return Ok(new
+    {
+        orderId = order.Id,
+        message = "Order placed successfully. Please proceed with payment.",
+    });
+}
+
+[HttpPost("pay")]
+public async Task<IActionResult> AddPayment([FromBody] PaymentCreateDto dto)
+{
+    var order = await _uow.Orders.GetOrderById(dto.OrderId);
+    if (order == null)
+        return NotFound("Order not found.");
+
+    var payment = new PaymentEntity
+    {
+        Amount = dto.Amount,
+        OrderId = dto.OrderId,
+        PaymentMethod = dto.Method ?? "Cash"
+    };
+    
+
+    await _uow.Payments.CreatePayment(payment);
+    await _uow.SaveChangesAsync();
+
+    var ledger = new LedgerEntity
+    {
+        Creditor = "SystemAccount",
+        Debtor = order.BuyerId.ToString(),
+        Amount = dto.Amount
+    };
+    await _uow.Ledgers.CreateLedger(ledger);
+    await _uow.SaveChangesAsync();
+    
+    var totalPaid = await _uow.Payments.GetTotalPaidForOrder(order.Id);
+    var isFullyPaid = totalPaid >= order.TotalGrossAmount;
+
+    if (isFullyPaid)
+    {
+        order.OrderStatus = OrderStatusEnum.Payed; 
+        await _uow.Orders.UpdateOrder(order);
+        await _uow.SaveChangesAsync();
     }
+
+    return Ok(new { message = "Payment recorded successfully." });
+}
+
+}

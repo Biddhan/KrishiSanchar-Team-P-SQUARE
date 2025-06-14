@@ -115,4 +115,12 @@ public class ProductApiController: ControllerBase
         return Ok(results);
     }
 
+    [HttpGet("get-product-by-description")]
+    public async Task<IActionResult> GetProductByDescription([FromQuery] string description)
+    {
+        var results = await _uow.Products.GetAllProductsByDescription(description);
+        if(results==null) throw new Exception("Search result is null");
+        return Ok(results);
+    }
+
 }

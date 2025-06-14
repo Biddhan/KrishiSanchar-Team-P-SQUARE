@@ -34,4 +34,11 @@ public class ProductRepo: IProductRepo
         _appContext.Products.Remove(entity);
         await _appContext.SaveChangesAsync();
     }
+
+    public async Task<List<ProductEntity>> GetAllProductsByDescription(string description)
+    {
+        return await _appContext.Products
+            .Where(p => p.Description.Contains(description, StringComparison.OrdinalIgnoreCase))
+            .ToListAsync();
+    }
 }

@@ -5,6 +5,7 @@ using KrishiSancharCore.AuthFeatures;
 using KrishiSancharCore.Helper;
 using KrishiSancharCore.ProductFeatures;
 using KrishiSancharCore.ReservationFeatures;
+using KrishiSancharCore.UserFeatures;
 using KrishiSancharDataAccess.Converter.Utility;
 using KrishiSancharDataAccess.Data;
 using KrishiSancharDataAccess.Repository;
@@ -33,11 +34,13 @@ builder.Services.AddSingleton(new Cloudinary(cloudinaryUrl));
 builder.Services.AddScoped<ProductService>();
 builder.Services.AddHttpClient<BrevoEmailService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IUow, Uow>();
 builder.Services.AddScoped<IProductRepo, ProductRepo>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<IReservationCleanupService, ReserveItemCleanupService>();
 builder.Services.AddHostedService<ReserveItemCleanupService>();
+
 
 builder.Services.AddAuthentication(options =>
 {

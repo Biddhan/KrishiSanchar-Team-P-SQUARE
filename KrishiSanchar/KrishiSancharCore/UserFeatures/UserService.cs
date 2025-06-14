@@ -1,7 +1,8 @@
-﻿using KrishiSancharDataAccess.Converter.Utility;
+﻿using KrishiSancharCore.UserFeatures.UserEnums;
+using KrishiSancharDataAccess.Converter.Utility;
 using Microsoft.Extensions.Options;
 
-namespace KrishiSancharCore.UserFeatures.UserEnums;
+namespace KrishiSancharCore.UserFeatures;
 
 public class UserService
 {
@@ -39,4 +40,12 @@ public class UserService
         await _uow.Users.UpdateUser(entity);
         await _uow.SaveChangesAsync();
     }
+
+    public async Task UpdateUserRoleToExpert(UserEntity user)
+    {
+        user.Role= UserRoleEnum.Expert;
+        await _uow.Users.UpdateUser(user);
+        await _uow.SaveChangesAsync();
+    }
+    
 }
