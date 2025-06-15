@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:p_square/core/constants/string_constants.dart';
 
 import '../../models/category_response_model.dart';
 
@@ -79,7 +80,9 @@ class ProductCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            product.stock == 0 ? 'No Stock' : 'Low Stock',
+                            product.stock == 0
+                                ? StringConstants.outOfStock
+                                : StringConstants.lowStock,
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -93,7 +96,7 @@ class ProductCard extends StatelessWidget {
               ),
               // Product Details
               Expanded(
-                flex: 2,
+                flex: 3,
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Column(
@@ -107,7 +110,6 @@ class ProductCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                           color: Colors.black87,
                         ),
-                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 4),
@@ -120,50 +122,50 @@ class ProductCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '\$${product.displayPrice.toStringAsFixed(2)}',
+                                '${StringConstants.currency} ${product.displayPrice.toStringAsFixed(2)}',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.green,
                                 ),
                               ),
-                              if (product.unitPrice !=
-                                  product.displayPrice.toInt())
-                                Text(
-                                  '\$${product.unitPrice}',
-                                  maxLines: 3,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade500,
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
-                                ),
+                              // if (product.unitPrice !=
+                              //     product.displayPrice.toInt())
+                              //   Text(
+                              //     '${StringConstants.currency} ${product.unitPrice}',
+                              //     maxLines: 3,
+                              //     style: TextStyle(
+                              //       fontSize: 12,
+                              //       color: Colors.grey.shade500,
+                              //       decoration: TextDecoration.lineThrough,
+                              //     ),
+                              //   ),
                             ],
                           ),
-                          // Stock
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: Colors.blue.shade200,
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              'Stock: ${product.stock}',
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: Colors.blue.shade700,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
                         ],
+                      ),
+                      // Stock
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.blue.shade200,
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '${product.stock} ${StringConstants.unitLabel}',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.blue.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ],
                   ),

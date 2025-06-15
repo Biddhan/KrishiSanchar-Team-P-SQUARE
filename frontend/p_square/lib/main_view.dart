@@ -14,6 +14,7 @@ class _MainScreenState extends State<MainScreen> {
   int currentIndex = 0;
   @override
   Widget build(BuildContext context) {
+    
     final List<Widget> tabs = [PlantView(), MarketplaceScreen(), ProfileView()];
     return SafeArea(
       child: Scaffold(

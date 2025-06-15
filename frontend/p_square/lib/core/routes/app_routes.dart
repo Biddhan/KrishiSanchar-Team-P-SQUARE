@@ -7,4 +7,5 @@ abstract class RouteNames {
   static const String sell = '/sell';
   static const String profile = '/profile';
   static const String search = '/search';
+  static const String editProfile = '/editProfile';
 }

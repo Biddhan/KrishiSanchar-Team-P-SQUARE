@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:p_square/app/features/marketplace/models/category_response_model.dart';
 import 'package:p_square/app/features/marketplace/models/product_upload_model.dart';
+import 'package:p_square/app/features/marketplace/models/user_details_model.dart';
 import 'package:p_square/core/client/dio_client.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as path;
@@ -33,7 +34,6 @@ class MarketplaceService {
         return [];
       }
     } catch (e) {
-      print("Error in search: $e");
       rethrow;
     }
   }
@@ -144,11 +144,16 @@ class MarketplaceService {
     }
   }
 
-  Future<OrderResponse> placeOrder(List<Map<String, dynamic>> cartItems) async {
+  Future<OrderResponse> getOrderPreviewForProduct(
+    int productId,
+    int quantity,
+  ) async {
     try {
       final response = await _dioClient.post(
-        "/api/orders",
-        data: {"items": cartItems},
+        "/api/order/preview",
+        data: [
+          {'productId': productId, 'quantity': quantity},
+        ],
       );
 
       return OrderResponse.fromJson(response.data);
@@ -157,10 +162,71 @@ class MarketplaceService {
     }
   }
 
-  Future<OrderResponse> getOrderDetails(String orderId) async {
+  // Get order details based on cart items
+  Future<OrderResponse> getOrderDetails(
+    List<Map<String, dynamic>> cartItems,
+    String cookie,
+  ) async {
     try {
-      final response = await _dioClient.get("/api/orders/$orderId");
+      final response = await _dioClient.post(
+        "/api/order/preview",
+        data: cartItems,
+        options: Options(headers: {"Cookie": "c_user=$cookie"}),
+      );
+
       return OrderResponse.fromJson(response.data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Place order with the cart items
+  Future<void> placeOrder(
+    String tokenn,
+    String deliveryAddress,
+    String authToken,
+  ) async {
+    try {
+      await _dioClient.post(
+        "/api/order/placeorder",
+        options: Options(headers: {"Cookie": "c_user=$authToken"}),
+        data: {"token": tokenn, "deliveryAddress": deliveryAddress},
+      );
+
+      return;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Payment method
+  Future<bool> payment(
+    int orderId,
+    double amount,
+    String method,
+    String authToken,
+  ) async {
+    try {
+      final response = await _dioClient.post(
+        "/api/order/pay",
+        options: Options(headers: {"Cookie": "c_user=$authToken"}),
+        data: {"orderId": orderId, "amount": amount, "method": method},
+      );
+      return true;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Get user details using cookie
+  Future<User> getUserDetails(String cookie) async {
+    try {
+      final response = await _dioClient.get(
+        "/api/auth/me",
+        options: Options(headers: {"Cookie": "c_user=$cookie"}),
+      );
+
+      return User.fromJson(response);
     } catch (e) {
       rethrow;
     }

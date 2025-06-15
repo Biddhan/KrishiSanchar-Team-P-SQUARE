@@ -4,19 +4,24 @@ import 'package:p_square/app/features/marketplace/controller/product_upload_cont
 import 'package:p_square/core/constants/enum_constants.dart';
 // import 'package:p_square/core/constants/string_constants.dart';
 
-class ProductUploadView extends GetView<ProductUploadController> {
+class ProductUploadView extends StatefulWidget {
   const ProductUploadView({super.key});
 
   @override
+  State<ProductUploadView> createState() => _ProductUploadViewState();
+}
+
+class _ProductUploadViewState extends State<ProductUploadView> {
+  @override
   Widget build(BuildContext context) {
+    final controller = Get.find<ProductUploadController>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Upload Product'),
+        title: const Text('अपलोड गर्नुहोस्'),
         actions: [
           IconButton(
             icon: const Icon(Icons.delete_forever_rounded),
             onPressed: controller.clearForm,
-            tooltip: 'Clear form',
           ),
         ],
       ),
@@ -33,7 +38,7 @@ class ProductUploadView extends GetView<ProductUploadController> {
                 const Icon(Icons.check_circle, color: Colors.green, size: 100),
                 const SizedBox(height: 20),
                 const Text(
-                  'Product Uploaded Successfully!',
+                  'सफलतापूर्वक अपलोड भयो!',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 20),
@@ -41,7 +46,7 @@ class ProductUploadView extends GetView<ProductUploadController> {
                   onPressed: () {
                     controller.isSuccess.value = false;
                   },
-                  child: const Text('Upload Another Product'),
+                  child: const Text('अर्को उत्पादन अपलोड गर्नुहोस्'),
                 ),
               ],
             ),
@@ -56,7 +61,7 @@ class ProductUploadView extends GetView<ProductUploadController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Image picker
-                _buildImagePicker(context),
+                _buildImagePicker(context, controller),
 
                 const SizedBox(height: 20),
 
@@ -64,13 +69,13 @@ class ProductUploadView extends GetView<ProductUploadController> {
                 TextFormField(
                   controller: controller.nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Product Name',
+                    labelText: 'उत्पादनको नाम',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.shopping_bag),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter product name';
+                      return 'कृपया उत्पादनको नाम आवश्यक छ';
                     }
                     return null;
                   },
@@ -82,7 +87,7 @@ class ProductUploadView extends GetView<ProductUploadController> {
                 TextFormField(
                   controller: controller.descriptionController,
                   decoration: const InputDecoration(
-                    labelText: 'Description',
+                    labelText: 'विवरण',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.description),
                     alignLabelWithHint: true,
@@ -90,7 +95,7 @@ class ProductUploadView extends GetView<ProductUploadController> {
                   maxLines: 3,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter product description';
+                      return 'कृपया उत्पादनको विवरण प्रविष्ट गर्नुहोस्';
                     }
                     return null;
                   },
@@ -99,9 +104,29 @@ class ProductUploadView extends GetView<ProductUploadController> {
                 const SizedBox(height: 16),
 
                 // Category selection
-                _buildCategorySelector(),
+                _buildCategorySelector(controller),
 
                 const SizedBox(height: 16),
+
+                if (controller.stockController.text.isNotEmpty &&
+                    controller.priceController.text.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(15),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: Colors.lightBlue.withValues(alpha: 0.1),
+                    ),
+                    child: Text(
+                      "बिक्री मूल्य: ${int.parse(controller.priceController.text) * 1.05}",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+
+                SizedBox(height: 16),
 
                 // Stock and price in a row
                 Row(
@@ -111,17 +136,20 @@ class ProductUploadView extends GetView<ProductUploadController> {
                       child: TextFormField(
                         controller: controller.stockController,
                         decoration: const InputDecoration(
-                          labelText: 'Stock',
+                          labelText: 'स्टक',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.inventory),
                         ),
                         keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Required';
+                            return 'आवश्यक छ';
                           }
                           if (int.tryParse(value) == null) {
-                            return 'Enter a number';
+                            return 'नम्बर प्रविष्ट गर्नुहोस्';
                           }
                           return null;
                         },
@@ -135,17 +163,20 @@ class ProductUploadView extends GetView<ProductUploadController> {
                       child: TextFormField(
                         controller: controller.priceController,
                         decoration: const InputDecoration(
-                          labelText: 'Price (Rs)',
+                          labelText: 'मूल्य (रु.)',
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.attach_money),
                         ),
                         keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          setState(() {});
+                        },
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Required';
+                            return 'आवश्यक छ';
                           }
                           if (int.tryParse(value) == null) {
-                            return 'Enter a number';
+                            return 'नम्बर आवश्यक छ';
                           }
                           return null;
                         },
@@ -167,7 +198,7 @@ class ProductUploadView extends GetView<ProductUploadController> {
                       foregroundColor: Colors.white,
                     ),
                     child: const Text(
-                      'UPLOAD PRODUCT',
+                      'उत्पादन अपलोड गर्नुहोस्',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -183,12 +214,15 @@ class ProductUploadView extends GetView<ProductUploadController> {
     );
   }
 
-  Widget _buildImagePicker(BuildContext context) {
+  Widget _buildImagePicker(
+    BuildContext context,
+    ProductUploadController controller,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Product Image',
+          'उत्पादनको तस्वीर',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -209,7 +243,7 @@ class ProductUploadView extends GetView<ProductUploadController> {
                         Icon(Icons.image, size: 50, color: Colors.grey[400]),
                         const SizedBox(height: 8),
                         Text(
-                          'Tap to select an image',
+                          'तस्वीर छनौट',
                           style: TextStyle(color: Colors.grey[600]),
                         ),
                       ],
@@ -234,9 +268,9 @@ class ProductUploadView extends GetView<ProductUploadController> {
               child: ElevatedButton.icon(
                 onPressed: controller.pickImage,
                 icon: const Icon(Icons.photo_library),
-                label: const Text('Gallery'),
+                label: const Text('ग्यालेरी'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue[700],
+                  backgroundColor: Colors.green[700],
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -246,9 +280,9 @@ class ProductUploadView extends GetView<ProductUploadController> {
               child: ElevatedButton.icon(
                 onPressed: controller.captureImage,
                 icon: const Icon(Icons.camera_alt),
-                label: const Text('Camera'),
+                label: const Text('क्यामेरा'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[700],
+                  backgroundColor: Colors.blue[700],
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -259,12 +293,12 @@ class ProductUploadView extends GetView<ProductUploadController> {
     );
   }
 
-  Widget _buildCategorySelector() {
+  Widget _buildCategorySelector(ProductUploadController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Category',
+          'श्रेणी',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -277,30 +311,34 @@ class ProductUploadView extends GetView<ProductUploadController> {
             children: [
               _buildCategoryTile(
                 CategoryEnum.seeds,
-                'Seeds',
+                'बीउ',
                 Icons.eco,
                 Colors.green,
+                controller,
               ),
               const Divider(height: 1),
               _buildCategoryTile(
                 CategoryEnum.tools,
-                'Tools',
+                'उपकरण',
                 Icons.build,
                 Colors.orange,
+                controller,
               ),
               const Divider(height: 1),
               _buildCategoryTile(
                 CategoryEnum.crops,
-                'Crops',
+                'बाली',
                 Icons.grass,
                 Colors.lightGreen,
+                controller,
               ),
               const Divider(height: 1),
               _buildCategoryTile(
                 CategoryEnum.medicine,
-                'Medicine',
+                'औषधि',
                 Icons.healing,
                 Colors.red,
+                controller,
               ),
             ],
           ),
@@ -314,6 +352,7 @@ class ProductUploadView extends GetView<ProductUploadController> {
     String title,
     IconData icon,
     Color color,
+    ProductUploadController controller,
   ) {
     return Obx(
       () => RadioListTile<CategoryEnum>(

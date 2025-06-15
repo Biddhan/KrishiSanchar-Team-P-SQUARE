@@ -26,12 +26,18 @@ class MarketplaceScreen extends GetView<MarketplaceController> {
           const HeaderAndSearchIcon(),
           const TopActionButtons(),
           Expanded(
-            child: controller.isLoading.value
-                ? const Center(child: CircularProgressIndicator())
-                : GridViewProductWidget(controller: controller),
+            child: Obx(
+              () => controller.isLoading.value
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: controller.refreshMarketplace,
+                      child: GridViewProductWidget(controller: controller),
+                    ),
+            ),
           ),
         ],
       ),
     );
   }
 }
+

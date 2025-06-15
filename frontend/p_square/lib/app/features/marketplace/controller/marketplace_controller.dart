@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:p_square/app/features/marketplace/models/order_response_model.dart';
 import 'package:p_square/app/features/marketplace/services/marketplace_service.dart';
-import 'package:p_square/core/constants/string_constants.dart';
+import 'package:p_square/app/features/marketplace/views/cart_view.dart';
+import 'package:p_square/app/utils/snackbar_utils.dart';
 import 'package:snackbarx/snackbarx.dart';
 
 import '../../../../core/constants/enum_constants.dart';
+import '../../../utils/secure_storage_util.dart';
+import '../../auth/views/auth_helper_method.dart';
+import '../models/cart_item.dart';
 import '../models/category_response_model.dart';
 import '../views/product_view.dart';
+import '../views/widgets/ask_addresss_widget.dart';
 
 class MarketplaceController extends GetxController {
   RxBool isLoading = false.obs;
@@ -30,12 +36,12 @@ class MarketplaceController extends GetxController {
     }
 
     selectedCategory.value = category;
-    
+
     // Only filter by category in search view
     if (isSearching.value) {
       filterItemsByCategory();
     }
-    
+
     // Clear search results when changing category
     searchResults.clear();
     searchBarController.clear();
@@ -45,7 +51,9 @@ class MarketplaceController extends GetxController {
     // If we have categories loaded, filter products by the selected category
     if (categoryList.isEmpty) return; // Prevent filtering if data isn't loaded
 
-    final selectedCategoryId = selectedCategory.value.index + 1; // Adjust index to match API category IDs
+    final selectedCategoryId =
+        selectedCategory.value.index +
+        1; // Adjust index to match API category IDs
 
     // Find the category with matching ID
     final matchingCategory = categoryList.firstWhereOrNull(
@@ -75,30 +83,20 @@ class MarketplaceController extends GetxController {
     isLoading(true);
     isSearching(true);
     try {
-      final int categoryId = selectedCategory.value.index + 1; // Adjust index to match API category IDs
+      final int categoryId =
+          selectedCategory.value.index +
+          1; // Adjust index to match API category IDs
       final List<Product> results = await _service.getSearchedItems(
         categoryId,
         text,
       );
-
-      if (results.isEmpty) {
-        // If no results, show a message
-        Get.snackbar(
-          'No Results',
-          'No products found matching "$text"',
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
-      }
 
       // Update the search results
       searchResults.assignAll(results);
       // Update the items list with search results
       items.assignAll(results);
     } catch (e) {
-      SnackbarX.showError('Search error: ${e.toString()}');
+      SnackbarX.showError('खोज असफल भयो: ${e.toString()}');
       // On error, revert to showing all products for the category
       filterItemsByCategory();
     } finally {
@@ -156,8 +154,8 @@ class MarketplaceController extends GetxController {
       isInitialized(true);
     } catch (e) {
       Get.snackbar(
-        'Error',
-        'Failed to load products: ${e.toString()}',
+        'त्रुटि',
+        'उत्पादन लोड गर्न असफल: ${e.toString()}',
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.red.shade600,
         colorText: Colors.white,
@@ -174,38 +172,6 @@ class MarketplaceController extends GetxController {
   Future<void> onProductTap(Product product) async {
     selectedProduct.value = product;
     Get.to(() => ProductView(product));
-  }
-
-  final cart = <String>[].obs;
-
-  Future<bool> addToCart(String guid) async {
-    if (cart.contains(guid)) {
-      Get.snackbar(
-        StringConstants.alreadyInCartTitle,
-        StringConstants.alreadyInCart,
-        icon: const Icon(Icons.error, color: Colors.white),
-        backgroundColor: Colors.red[400],
-        colorText: Colors.white,
-      );
-      return false;
-    }
-    cart.add(guid);
-    Get.snackbar(
-      'Success',
-      'Item added to cart',
-      icon: const Icon(Icons.check, color: Colors.white),
-      backgroundColor: Colors.green[400],
-      colorText: Colors.white,
-    );
-    return true;
-  }
-
-  void removeFromCart(String guid) {
-    cart.remove(guid);
-  }
-
-  bool isInCart(String guid) {
-    return cart.contains(guid);
   }
 
   // Controllers
@@ -225,7 +191,269 @@ class MarketplaceController extends GetxController {
     searchBarController.dispose();
     super.dispose();
   }
+
+  // Cart related properties
+  final cartItems = <CartItem>[].obs;
+  final RxBool isProcessingOrder = false.obs;
+  final Rxn<OrderResponse> orderPreview = Rxn<OrderResponse>();
+
+  Future<void> addToCart(Product product, {int quantity = 1}) async {
+    isProcessingOrder(true);
+
+    try {
+      // Check if product is already in cart
+      final existingItem = cartItems.firstWhereOrNull(
+        (item) => item.productId == product.id,
+      );
+
+      if (existingItem != null) {
+        // Update quantity if already in cart
+        existingItem.quantity += quantity;
+        cartItems.refresh();
+      } else {
+        cartItems.add(
+          CartItem(
+            productId: product.id,
+            productName: product.name,
+            price: product.unitPrice.toDouble(),
+            imageUrl: product.imageUrl,
+            quantity: quantity,
+          ),
+        );
+      }
+
+      final items = cartItems
+          .map(
+            (item) => {'productId': item.productId, 'quantity': item.quantity},
+          )
+          .toList();
+
+      final userToken = await StorageUtil.getToken();
+      final response = await _service.getOrderDetails(items, userToken!);
+
+      // Store response
+      orderPreview.value = response;
+
+      Get.snackbar(
+        'खरिद सूचीमा थपियो',
+        'सामान खरिद सूचीमा सफलतापूर्वक थपियो',
+        icon: const Icon(Icons.check, color: Colors.white),
+        backgroundColor: Colors.green[400],
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+        mainButton: TextButton(
+          onPressed: () {
+            Get.to(() => const CartView());
+          },
+          child: const Text(
+            'खरिद सूची हेर्नुहोस्',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    } catch (e) {
+      Get.snackbar(
+        'त्रुटि',
+        'सामान खरिद सूचीमा थप्न असफल: ${e.toString()}',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isProcessingOrder(false);
+    }
+  }
+
+  // Remove from cart - now updates order preview
+  Future<void> removeFromCart(int productId) async {
+    cartItems.removeWhere((item) => item.productId == productId);
+
+    if (cartItems.isEmpty) {
+      // If cart is empty, clear order preview
+      orderPreview.value = null;
+      return;
+    }
+
+    // Update order preview
+    await updateOrderPreview();
+  }
+
+  // Update quantity - now updates order preview
+  Future<void> updateQuantity(int productId, int quantity) async {
+    if (quantity <= 0) {
+      await removeFromCart(productId);
+      return;
+    }
+
+    final item = cartItems.firstWhereOrNull(
+      (item) => item.productId == productId,
+    );
+    if (item != null) {
+      item.quantity = quantity;
+      cartItems.refresh();
+      // Update order preview
+      await updateOrderPreview();
+    }
+  }
+
+  // Helper method to update order preview
+  Future<void> updateOrderPreview() async {
+    isProcessingOrder(true);
+
+    try {
+      // Prepare cart items for API
+      final items = cartItems
+          .map(
+            (item) => {'productId': item.productId, 'quantity': item.quantity},
+          )
+          .toList();
+
+      final userToken = await StorageUtil.getToken();
+      final response = await _service.getOrderDetails(items, userToken!);
+
+      // Store response
+      orderPreview.value = response;
+    } catch (e) {
+      Get.snackbar(
+        'त्रुटि',
+        'अर्डर विवरण असफल: ${e.toString()}',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isProcessingOrder(false);
+    }
+  }
+
+  // Check if product is in cart
+  bool isInCart(int productId) {
+    return cartItems.any((item) => item.productId == productId);
+  }
+
+  // Get cart item quantity
+  int getCartItemQuantity(int productId) {
+    final item = cartItems.firstWhereOrNull(
+      (item) => item.productId == productId,
+    );
+    return item?.quantity ?? 0;
+  }
+
+  // Calculate cart total from order preview
+  double get cartTotal {
+    return orderPreview.value?.grandTotalAmount ??
+        cartItems.fold(0, (sum, item) => sum + (item.price * item.quantity));
+  }
+
+  // Get cart item count
+  int get cartItemCount {
+    return cartItems.fold(0, (sum, item) => sum + item.quantity);
+  }
+
+  // Clear cart
+  void clearCart() {
+    cartItems.clear();
+    orderPreview.value = null;
+  }
+
+  // Place order
+  Future<void> placeOrder() async {
+    // Check if user is logged in, if not
+    final isAuthenticated = await AuthHelper.checkAuthAndProceed();
+    if (!isAuthenticated) {
+      return;
+    }
+
+    if (cartItems.isEmpty) {
+      SnackbarUtils.showNepaliError(
+        'खाली खरिद सूची',
+        'तपाईंको खरिद सूचीमा कुनै सामान छैन',
+      );
+      return;
+    }
+
+    isProcessingOrder(true);
+
+    try {
+      final userToken = orderPreview.value!.token;
+      final address = await getUserAddress();
+            final authToken = await StorageUtil.getToken();
+
+      if (address != null) {
+        await _service.placeOrder(userToken, address, authToken!);
+      } else {
+        Get.snackbar(
+          'सूचना',
+          'ठेगाना प्रदान गरिएको छैन',
+          snackPosition: SnackPosition.TOP,
+        );
+        return;
+      }
+
+      // Clear cart after successful order
+      clearCart();
+
+      Get.snackbar(
+        'अर्डर सफल भयो',
+        'सामान खरिद सूचीमा सफलतापूर्वक थपियो',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+
+      Get.back();
+    } catch (e) {
+      Get.snackbar(
+        'अर्डर असफल',
+        'अर्डर राख्न असफल: ${e.toString()}',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isProcessingOrder(false);
+    }
+  }
+
+  // Refresh
+  Future<void> refreshMarketplace() async {
+    isLoading(true);
+    try {
+      final List<CategoryModel> response = await _service.getInitialData();
+      categoryList.assignAll(response);
+
+      // Update all products
+      List<Product> products = [];
+      for (var category in response) {
+        products.addAll(category.products);
+      }
+      allProducts.assignAll(products);
+
+      // Reset to show all products
+      items.assignAll(allProducts);
+
+      // Clear search if active
+      if (isSearching.value) {
+        isSearching(false);
+        searchResults.clear();
+        searchBarController.clear();
+      }
+    } catch (e) {
+      Get.snackbar(
+        'त्रुटि',
+        'उत्पादनहरू ताजा गर्न असफल: ${e.toString()}',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+        icon: const Icon(Icons.error, color: Colors.white),
+        duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.all(16),
+        borderRadius: 8,
+      );
+    } finally {
+      isLoading(false);
+    }
+  }
+
 }
-
-
-

@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:p_square/app/utils/secure_storage_util.dart';
+import 'package:p_square/app/utils/snackbar_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:p_square/app/features/marketplace/models/category_response_model.dart';
 import 'package:p_square/app/features/marketplace/models/product_upload_model.dart';
@@ -159,6 +161,26 @@ class ProductUploadController extends GetxController {
     selectedCategory.value = category;
   }
 
+  // Get seller id
+  Future<bool> getUserId() async {
+    try {
+      final userToken = await StorageUtil.getToken();
+      if (userToken != null) {
+        final userDetails = await _service.getUserDetails(userToken);
+        StorageUtil.saveValue("user_id", "${userDetails.userId}");
+        return true;
+      }
+      SnackbarUtils.showNepaliError("त्रुटि", "फेरि प्रयास गर्नुहोस्।");
+      return false;
+    } catch (e) {
+      SnackbarUtils.showNepaliError(
+        "त्रुटि",
+        "फेरि प्रयास गर्नुहोस्।. ${e.toString()}",
+      );
+      return false;
+    }
+  }
+
   // Upload product
   Future<void> uploadProduct() async {
     if (!formKey.currentState!.validate()) {
@@ -179,8 +201,14 @@ class ProductUploadController extends GetxController {
     isLoading.value = true;
 
     try {
-      // load from local storage
-      // final sellerId = ;
+      var userId = await StorageUtil.getValue("user_id");
+      final cookie = await StorageUtil.getToken();
+      if (userId == null) {
+        final user = await _service.getUserDetails(cookie!);
+        userId = "${user.userId}";
+      }
+      final parsedUserId = int.tryParse(userId) ?? -99999;
+
       final request = ProductUploadRequest(
         name: nameController.text,
         description: descriptionController.text,
@@ -188,8 +216,7 @@ class ProductUploadController extends GetxController {
         stock: int.parse(stockController.text),
         unitPrice: int.parse(priceController.text),
         imageFile: selectedImage.value!,
-        sellerId: 2,
-        // TODO:
+        sellerId: parsedUserId,
       );
 
       final response = await _service.uploadProduct(request);

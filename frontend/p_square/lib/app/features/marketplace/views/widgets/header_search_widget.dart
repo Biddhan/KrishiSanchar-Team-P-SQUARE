@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:p_square/app/features/marketplace/controller/marketplace_controller.dart';
+import 'package:p_square/app/features/marketplace/views/cart_view.dart';
 
 import '../../../../../core/constants/string_constants.dart';
 import '../../../../../core/routes/app_routes.dart';
 
-class HeaderAndSearchIcon extends StatelessWidget {
+class HeaderAndSearchIcon extends GetView<MarketplaceController> {
   const HeaderAndSearchIcon({super.key});
 
   @override
@@ -13,7 +15,7 @@ class HeaderAndSearchIcon extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        SizedBox(height: 12),
+        const SizedBox(height: 12),
 
         // header text
         Text(
@@ -29,16 +31,44 @@ class HeaderAndSearchIcon extends StatelessWidget {
               onPressed: () {
                 Get.toNamed(RouteNames.search);
               },
-              icon: Icon(Icons.search),
+              icon: const Icon(Icons.search),
             ),
-            // vart icon
-            IconButton(
-              onPressed: () {
-                // TODO: add cart page
-                Get.toNamed(RouteNames.search);
-              },
-              icon: Icon(Icons.shopping_cart),
-            ),
+            // cart icon with badge
+            Obx(() => Stack(
+              alignment: Alignment.topRight,
+              children: [
+                IconButton(
+                  onPressed: () {
+                    Get.to(() => const CartView());
+                  },
+                  icon: const Icon(Icons.shopping_cart),
+                ),
+                if (controller.cartItemCount > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 16,
+                        minHeight: 16,
+                      ),
+                      child: Text(
+                        '${controller.cartItemCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            )),
           ],
         ),
       ],
