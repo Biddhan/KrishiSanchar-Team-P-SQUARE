@@ -1,0 +1,14 @@
+.idea/
+KrishiSanchar/.idea/
+KrishiSanchar/.vs/
+KrishiSanchar/script.sql
+KrishiSanchar/KrishiSancharWeb/obj
+KrishiSanchar/KrishiSancharWeb/bin
+KrishiSanchar/KrishiSancharWeb/appsettings.Production.json
+KrishiSanchar/KrishiSancharWeb/appsettings.Development.json
+KrishiSanchar/KrishiSancharCore/obj
+KrishiSanchar/KrishiSancharCore/bin
+KrishiSanchar/KrishiSancharDataAccess/obj
+KrishiSanchar/KrishiSancharDataAccess/bin
+KrishiSanchar/KrishiSancharDataAccess/Migrations
+
