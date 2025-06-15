@@ -1,4 +1,5 @@
 ﻿using KrishiSancharCore.CategoryFeatures;
+using KrishiSancharCore.InsuranceFeatures;
 using KrishiSancharCore.LedgerFeatures;
 using KrishiSancharCore.OrderFeature;
 using KrishiSancharCore.PaymentFeatures;
@@ -25,6 +26,9 @@ public class AppDbContext: DbContext
         public DbSet<PaymentEntity> Payments { get; set; }
         public DbSet<LedgerEntity> Ledgers { get; set; }
         public DbSet<ReservationItemEntity> ReservationItems { get; set; }
+        public DbSet<InsuranceProviderEntity> InsuranceProviders { get; set; }
+        public DbSet<InsuranceProductEntity> InsuranceProducts { get; set; }
+        public DbSet<FarmerInsuranceInterestEntity> FarmerInsuranceInterests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,27 +38,11 @@ public class AppDbContext: DbContext
             modelBuilder.ApplyConfiguration(new UserConfiguration());
             modelBuilder.ApplyConfiguration(new OrderConfiguration());
             modelBuilder.ApplyConfiguration(new ReservationItemEntityConfiguration());
+            modelBuilder.ApplyConfiguration(new InsuranceProviderEntityMapping());
+            modelBuilder.ApplyConfiguration(new InsuranceProductEntityMapping());
+            modelBuilder.ApplyConfiguration(new FarmerInsuranceInterestEntityMapping());
             new AppSeeder(modelBuilder);
-            modelBuilder.Entity<UserEntity>().HasData(
-                new UserEntity(
-                    id: 1,
-                    fullname: "Roman Khatri",
-                    username: "admin1",
-                    passwordHash: BCrypt.Net.BCrypt.HashPassword("Secret123"),
-                    email: "romanforgit@gmail.com",
-                    phoneNumber: "+9779817996680",
-                    address: "Biratmode-4"
-                ) { Status = UserStatusEnum.Active, IsVerified = true, Role= UserRoleEnum.Admin },
-                new UserEntity(
-                    id: 4,
-                    fullname: "Krishi User",
-                    username: "krishi.3",
-                    passwordHash: BCrypt.Net.BCrypt.HashPassword("Secret123"),
-                    email: "webcone1@gmail.com",
-                    phoneNumber: "+9779817996909",
-                    address: "Biratmode-4"
-                ) { Status = UserStatusEnum.Active, IsVerified = true, Role= UserRoleEnum.General }
-            );
+           
             
         }
 

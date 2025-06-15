@@ -98,11 +98,12 @@ public class UserApiController : ControllerBase
         return Ok(user);
     }
 
-    [HttpPut("{id}/make-me-expert")]
-    public async Task<IActionResult> MakeMeExpert(int id)
+    [HttpPut("make-me-expert")]
+    public async Task<IActionResult> MakeMeExpert()
     {
-        var user= await _uow.Users.GetUserById(id);
-        if (user == null) return BadRequest();
+        var userId = _currentUser.GetUserId();
+        if (userId == null) return Unauthorized();
+        var user= await _uow.Users.GetUserById(userId.Value);
         await _userService.UpdateUserRoleToExpert(user);
         return Ok();
     }

@@ -1,5 +1,6 @@
 ﻿using KrishiSancharCore;
 using KrishiSancharCore.CategoryFeatures;
+using KrishiSancharCore.InsuranceFeatures;
 using KrishiSancharCore.LedgerFeatures;
 using KrishiSancharCore.OrderFeature;
 using KrishiSancharCore.PaymentFeatures;
@@ -19,6 +20,7 @@ public class Uow : IUow
     public IUserRepo Users { get; private set; }
     public IPaymentRepo Payments { get; private set; }
     public ILedgerRepo Ledgers { get; private set; }
+    public IInsuranceRepo Insurances { get; private set; }
     public Uow(AppDbContext appDbContext)
     {
         _appDbContext = appDbContext;
@@ -28,6 +30,7 @@ public class Uow : IUow
         Users = new UserRepo(_appDbContext);
         Payments = new PaymentRepo(_appDbContext);
         Ledgers = new LedgerRepo(_appDbContext);
+        Insurances = new InsuranceRepo(_appDbContext);
     }
 
     public async Task BeginTransactionAsync() => await _appDbContext.Database.BeginTransactionAsync();

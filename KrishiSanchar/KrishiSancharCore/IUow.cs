@@ -1,4 +1,5 @@
 ﻿using KrishiSancharCore.CategoryFeatures;
+using KrishiSancharCore.InsuranceFeatures;
 using KrishiSancharCore.LedgerFeatures;
 using KrishiSancharCore.OrderFeature;
 using KrishiSancharCore.PaymentFeatures;
@@ -15,6 +16,7 @@ public interface IUow
     IUserRepo Users { get; }
     IPaymentRepo Payments { get; }
     ILedgerRepo Ledgers { get; }
+    IInsuranceRepo Insurances { get; }
     Task SaveChangesAsync();
     
     Task BeginTransactionAsync();

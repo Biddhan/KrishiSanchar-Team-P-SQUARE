@@ -10,7 +10,7 @@ public class PaymentEntity
         CreatedTime = TimeOnly.FromDateTime(DateTime.Now);
     }
     public int Id { get; set; }
-    public string PaymentMethod { get; set; } = "Cash";
+    public string PaymentMethod { get; set; } = "Esewa";
     public decimal Amount { get; set; }
     public DateOnly CreatedDate { get; set; }
     public TimeOnly CreatedTime { get; set; }

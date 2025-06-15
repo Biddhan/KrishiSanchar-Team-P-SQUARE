@@ -19,6 +19,9 @@ public class AppSeeder
 
              //OrderItems
              // new OrderItemsSeeder(modelBuilder);
+             
+             //Insurance
+             new InsuranceSeeder(modelBuilder);
 
              
          }

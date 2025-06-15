@@ -2,7 +2,12 @@ using System.Text;
 using CloudinaryDotNet;
 using KrishiSancharCore;
 using KrishiSancharCore.AuthFeatures;
+using KrishiSancharCore.CategoryFeatures;
 using KrishiSancharCore.Helper;
+using KrishiSancharCore.InsuranceFeatures;
+using KrishiSancharCore.LedgerFeatures;
+using KrishiSancharCore.OrderFeature;
+using KrishiSancharCore.PaymentFeatures;
 using KrishiSancharCore.ProductFeatures;
 using KrishiSancharCore.ReservationFeatures;
 using KrishiSancharCore.UserFeatures;
@@ -36,10 +41,17 @@ builder.Services.AddHttpClient<BrevoEmailService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<IUow, Uow>();
+builder.Services.AddScoped<IOrderRepo, OrderRepo>();
 builder.Services.AddScoped<IProductRepo, ProductRepo>();
+builder.Services.AddScoped<IPaymentRepo, PaymentRepo>();
+builder.Services.AddScoped<IUserRepo, UserRepo>();
+builder.Services.AddScoped<ILedgerRepo, LedgerRepo>();
+builder.Services.AddScoped<ICategoryRepo, CategoryRepo>();
+builder.Services.AddScoped<IInsuranceRepo, InsuranceRepo>();
 builder.Services.AddScoped<CloudinaryService>();
 builder.Services.AddScoped<IReservationCleanupService, ReserveItemCleanupService>();
 builder.Services.AddHostedService<ReserveItemCleanupService>();
+
 
 
 builder.Services.AddAuthentication(options =>

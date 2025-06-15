@@ -21,7 +21,7 @@ public class OrderApiController : ControllerBase
     private readonly AppDbContext _dbContext;
     private readonly IMemoryCache _cache;
 
-    public OrderApiController(IUow uow, CurrentUserHelper currentUserHelper, AppDbContext dbcontext,IMemoryCache cache)
+    public OrderApiController(IUow uow, CurrentUserHelper currentUserHelper, AppDbContext dbcontext, IMemoryCache cache)
     {
         _uow = uow;
         _currentUserHelper = currentUserHelper;
@@ -157,46 +157,46 @@ public class OrderApiController : ControllerBase
     }
 
     [HttpPost("placeorder")]
-public async Task<IActionResult> PlaceOrder([FromBody] OrderPlaceRequestDto request)
-{
-    if (string.IsNullOrWhiteSpace(request.Token))
-        return BadRequest("Missing preview token.");
-
-    var preview = _cache.Get<OrderPreviewResponse>(request.Token);
-    if (preview == null)
-        return BadRequest("Order session expired.");
-
-    var userId = _currentUserHelper.GetUserId();
-    if (userId == null)
-        return Unauthorized();
-
-    var order = new OrderEntity
+    public async Task<IActionResult> PlaceOrder([FromBody] OrderPlaceRequestDto request)
     {
-        BuyerId = userId.Value,
-        DeliveryAddress = request.DeliveryAddress,
-        TotalGrossAmount = preview.GrandTotalAmount,
-        OrderItems = preview.Packages
-            .SelectMany(p => p.Value.Items.Select(i => new OrderItemEntity
-            {
-                ProductId = i.ProductId,
-                Quantity = i.Quantity,
-                TotalPrice = i.SubTotalAmount
-            }))
-            .ToList()
-    };
+        if (string.IsNullOrWhiteSpace(request.Token))
+            return BadRequest("Missing preview token.");
 
-    await _uow.Orders.CreateOrder(order);
-    await _uow.SaveChangesAsync();
-    _cache.Remove(request.Token);
+        var preview = _cache.Get<OrderPreviewResponse>(request.Token);
+        if (preview == null)
+            return BadRequest("Order session expired.");
 
-    return Ok(new
-    {
-        orderId = order.Id,
-        message = "Order placed successfully. Please proceed with payment.",
-    });
-}
+        var userId = _currentUserHelper.GetUserId();
+        if (userId == null)
+            return Unauthorized();
 
-[HttpPost("pay")]
+        var order = new OrderEntity
+        {
+            BuyerId = userId.Value,
+            DeliveryAddress = request.DeliveryAddress,
+            TotalGrossAmount = preview.GrandTotalAmount,
+            OrderItems = preview.Packages
+                .SelectMany(p => p.Value.Items.Select(i => new OrderItemEntity
+                {
+                    ProductId = i.ProductId,
+                    Quantity = i.Quantity,
+                    TotalPrice = i.SubTotalAmount
+                }))
+                .ToList()
+        };
+
+        await _uow.Orders.CreateOrder(order);
+        await _uow.SaveChangesAsync();
+        _cache.Remove(request.Token);
+
+        return Ok(new
+        {
+            orderId = order.Id,
+            message = "Order placed successfully. Please proceed with payment.",
+        });
+    }
+
+    [HttpPost("pay")]
 public async Task<IActionResult> AddPayment([FromBody] PaymentCreateDto dto)
 {
     var order = await _uow.Orders.GetOrderById(dto.OrderId);
@@ -207,33 +207,73 @@ public async Task<IActionResult> AddPayment([FromBody] PaymentCreateDto dto)
     {
         Amount = dto.Amount,
         OrderId = dto.OrderId,
-        PaymentMethod = dto.Method ?? "Cash"
+        PaymentMethod = dto.Method ?? "Esewa"
     };
-    
 
     await _uow.Payments.CreatePayment(payment);
     await _uow.SaveChangesAsync();
 
+    // Assuming systemAccountId is known or fetched
+    int systemAccountId = 1; 
+    var systemAccount = await _uow.Users.GetUserById(systemAccountId);
+
     var ledger = new LedgerEntity
     {
-        Creditor = "SystemAccount",
-        Debtor = order.BuyerId.ToString(),
-        Amount = dto.Amount
+        CreditorId = systemAccountId,
+        CreditorUser = systemAccount,
+        Creditor = systemAccount.FullName,  // snapshot
+        DebtorId = order.BuyerId,
+        DebtorUser = order.Buyer,
+        Debtor = order.Buyer.FullName,       // snapshot
+        Amount = dto.Amount,
+        OrderId = dto.OrderId
     };
+
+
     await _uow.Ledgers.CreateLedger(ledger);
-    await _uow.SaveChangesAsync();
+    await _uow.SaveChangesAsync(); // Save before looping
+
+    var sellerGroups = order.OrderItems.GroupBy(item => item.Product.SellerId);
+
+    foreach (var group in sellerGroups)
+    {
+        var sellerId = group.Key;
+        var seller = await _uow.Users.GetUserById(sellerId);
+        if (seller == null) continue;
+
+        var sellerAmount = group.Sum(item => item.Quantity * item.Product.UnitPrice);
+
+        var sellerLedger = new LedgerEntity
+        {
+            CreditorId = sellerId,
+            CreditorUser = seller,
+            Creditor = seller.FullName, // or seller.Name or whatever field holds "Roman Khatri"
+            DebtorId = systemAccountId,
+            DebtorUser = systemAccount,
+            Debtor = systemAccount.FullName, // same here
+            Amount = sellerAmount,
+            OrderId = dto.OrderId
+        };
+
+
+        await _uow.Ledgers.CreateLedger(sellerLedger);
+        await _uow.SaveChangesAsync();
+    }
+
     
+
     var totalPaid = await _uow.Payments.GetTotalPaidForOrder(order.Id);
     var isFullyPaid = totalPaid >= order.TotalGrossAmount;
 
     if (isFullyPaid)
     {
-        order.OrderStatus = OrderStatusEnum.Payed; 
+        order.OrderStatus = OrderStatusEnum.Payed;
         await _uow.Orders.UpdateOrder(order);
         await _uow.SaveChangesAsync();
     }
 
     return Ok(new { message = "Payment recorded successfully." });
 }
+
 
 }
